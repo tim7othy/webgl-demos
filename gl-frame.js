@@ -6,10 +6,18 @@ if(!gl) {
 }
 
 var vertexShaderSource = `
-  attribute vec4 a_position;
+  attribute vec2 a_position;
+
+  uniform vec2 u_resolution;
 
   void main() {
-    gl_Position = a_position;
+    vec2 zeroToOne = a_position / u_resolution;
+
+    vec2 zeroToTwo = zeroToOne * 2.0;
+
+    vec2 clipSpace = zeroToTwo - 1.0;
+
+    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
   }
 `
 
@@ -54,14 +62,18 @@ var createProgram = function(gl, vertexShader, fragmentShader) {
 var program = createProgram(gl, vertexShader, fragmentShader)
 
 var positionAttributeLocation = gl.getAttribLocation(program, "a_position")
+var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution")
 
 var positionBuffer = gl.createBuffer()
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
 
 var positions = [
-  0, 0,
-  0, 0.5,
-  0.7, 0
+  10, 20,
+  80, 20,
+  10, 30,
+  10, 30,
+  80, 20,
+  80, 30,
 ]
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
 
@@ -75,6 +87,8 @@ gl.useProgram(program)
 gl.enableVertexAttribArray(positionAttributeLocation)
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
 
+gl.uniform2f(resolutionUniformLocation, 400, 300)
+
 var size = 2
 var type = gl.FLOAT
 var normalized = false
@@ -84,7 +98,7 @@ gl.vertexAttribPointer(positionAttributeLocation, size, type, normalized, stride
 
 var primitiveType = gl.TRIANGLES
 var offset = 0
-var count = 3
+var count = 6
 gl.drawArrays(primitiveType, offset, count)
 
 
