@@ -38,10 +38,10 @@
   var m4 = {
     translation: function(tx, ty, tz) {
       return [
-        1, 0, 0, tx,
-        0, 1, 0, ty,
-        0, 0, 1, tz,
-        0, 0, 0, 1
+       1,  0,  0,  0,
+       0,  1,  0,  0,
+       0,  0,  1,  0,
+       tx, ty, tz, 1,
       ];
     },
 
@@ -50,8 +50,8 @@
       var s = Math.sin(angleInRadians);
       return [
         1, 0, 0, 0,
-        0, c, -s, 0,
-        0, s, c, 0,
+        0, c, s, 0,
+        0, -s, c, 0,
         0, 0, 0, 1
       ];
     },
@@ -60,9 +60,9 @@
       var c = Math.cos(angleInRadians);
       var s = Math.sin(angleInRadians);
       return [
-        c, 0, s, 0,
+        c, 0, -s, 0,
         0, 1, 0, 0,
-        -s, 0, c, 0,
+        s, 0, c, 0,
         0, 0, 0, 1
       ];
     },
@@ -71,8 +71,8 @@
       var c = Math.cos(angleInRadians);
       var s = Math.sin(angleInRadians);
       return [
-        c, -s, 0, 0,
-        s, c, 0, 0,
+        c, s, 0, 0,
+        -s, c, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1
       ];
@@ -90,15 +90,14 @@
     projection: function(width, height, depth) {
       // 注意：这个矩阵翻转了 Y 轴，所以 0 在上方
       return [
-        2 / width, 0, 0, -1,
-        0, -2 / height, 0, 1,
+        2 / width, 0, 0, 0,
+        0, -2 / height, 0, 0,
         0, 0, 2 / depth, 0,
-        0, 0, 0, 1
+        -1, 1, 0, 1
       ];
     },
 
     perspective: function(filedOfView, aspect, zNear, zFar) {
-      console.log(`aspect: ${aspect}`)
       var d = Math.tan(Math.PI * 0.5 - filedOfView * 0.5)
       var rangeInv = 1.0 / (zNear - zFar)
       var A = (zNear + zFar) * rangeInv
@@ -106,8 +105,8 @@
       return [
         d / aspect, 0, 0, 0,
         0, d, 0, 0,
-        0, 0, A, B,
-        0, 0, -1, 0
+        0, 0, A, -1,
+        0, 0, B, 0
       ]
     },
 
@@ -140,55 +139,32 @@
       var b21 = b[2 * 4 + 1];
       var b22 = b[2 * 4 + 2];
       var b23 = b[2 * 4 + 3];
-      var b30 = a[3 * 4 + 0];
-      var b31 = a[3 * 4 + 1];
-      var b32 = a[3 * 4 + 2];
-      var b33 = a[3 * 4 + 3];
+      var b30 = b[3 * 4 + 0];
+      var b31 = b[3 * 4 + 1];
+      var b32 = b[3 * 4 + 2];
+      var b33 = b[3 * 4 + 3];
+      // 下面看似是实现了b * a，但实际上之前我们一直使用的以列方式存储矩阵
+      // 因此矩阵a和b中行和列实际上是倒置的
+      // 这里实际上求的是 a * b
       return [
-        a00 * b00 + a01 * b10 + a02 * b20 + a03 * b30,
-        a00 * b01 + a01 * b11 + a02 * b21 + a03 * b31,
-        a00 * b02 + a01 * b12 + a02 * b22 + a03 * b32,
-        a00 * b03 + a01 * b13 + a02 * b23 + a03 * b33,
-        a10 * b00 + a11 * b10 + a12 * b20 + a13 * b30,
-        a10 * b01 + a11 * b11 + a12 * b21 + a13 * b31,
-        a10 * b02 + a11 * b12 + a12 * b22 + a13 * b32,
-        a10 * b03 + a11 * b13 + a12 * b23 + a13 * b33,
-        a20 * b00 + a21 * b10 + a22 * b20 + a23 * b30,
-        a20 * b01 + a21 * b11 + a22 * b21 + a23 * b31,
-        a20 * b02 + a21 * b12 + a22 * b22 + a23 * b32,
-        a20 * b03 + a21 * b13 + a22 * b23 + a23 * b33,
-        a30 * b00 + a31 * b10 + a32 * b20 + a33 * b30,
-        a30 * b01 + a31 * b11 + a32 * b21 + a33 * b31,
-        a30 * b02 + a31 * b12 + a32 * b22 + a33 * b32,
-        a30 * b03 + a31 * b13 + a32 * b23 + a33 * b33,
+        b00 * a00 + b01 * a10 + b02 * a20 + b03 * a30,
+        b00 * a01 + b01 * a11 + b02 * a21 + b03 * a31,
+        b00 * a02 + b01 * a12 + b02 * a22 + b03 * a32,
+        b00 * a03 + b01 * a13 + b02 * a23 + b03 * a33,
+        b10 * a00 + b11 * a10 + b12 * a20 + b13 * a30,
+        b10 * a01 + b11 * a11 + b12 * a21 + b13 * a31,
+        b10 * a02 + b11 * a12 + b12 * a22 + b13 * a32,
+        b10 * a03 + b11 * a13 + b12 * a23 + b13 * a33,
+        b20 * a00 + b21 * a10 + b22 * a20 + b23 * a30,
+        b20 * a01 + b21 * a11 + b22 * a21 + b23 * a31,
+        b20 * a02 + b21 * a12 + b22 * a22 + b23 * a32,
+        b20 * a03 + b21 * a13 + b22 * a23 + b23 * a33,
+        b30 * a00 + b31 * a10 + b32 * a20 + b33 * a30,
+        b30 * a01 + b31 * a11 + b32 * a21 + b33 * a31,
+        b30 * a02 + b31 * a12 + b32 * a22 + b33 * a32,
+        b30 * a03 + b31 * a13 + b32 * a23 + b33 * a33,
       ];
-    },
-
-    transpose: function(a) {
-      var a00 = a[0 * 4 + 0];
-      var a01 = a[0 * 4 + 1];
-      var a02 = a[0 * 4 + 2];
-      var a03 = a[0 * 4 + 3];
-      var a10 = a[1 * 4 + 0];
-      var a11 = a[1 * 4 + 1];
-      var a12 = a[1 * 4 + 2];
-      var a13 = a[1 * 4 + 3];
-      var a20 = a[2 * 4 + 0];
-      var a21 = a[2 * 4 + 1];
-      var a22 = a[2 * 4 + 2];
-      var a23 = a[2 * 4 + 3];
-      var a30 = a[3 * 4 + 0];
-      var a31 = a[3 * 4 + 1];
-      var a32 = a[3 * 4 + 2];
-      var a33 = a[3 * 4 + 3];
-      return [
-        a00, a10, a20, a30,
-        a01, a11, a21, a31,
-        a02, a12, a22, a32,
-        a03, a13, a23, a33
-      ]
     }
-
   }
 
   // 编译、链接顶点着色器和片段着色器
@@ -475,37 +451,11 @@
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    gl.enable(gl.CULL_FACE)
+    gl.enable(gl.DEPTH_TEST)
     gl.useProgram(program)
 
     // 设置所有全局变量
-
-    // Compute the matrices
-    var scaleMatrix = m4.scaling(scale[0], scale[1], scale[2]);
-    var r1 = m4.rotationX(angleInRadians[0]);
-    var r2 = m4.rotationY(angleInRadians[1]);
-    var r3 = m4.rotationZ(angleInRadians[2]);
-    var translationMatrix = m4.translation(translation[0], translation[1], translation[2]);
-    // var projectionMatrix = m4.projection(gl.canvas.width, gl.canvas.height, 400);
-    var filedOfView = 45 * Math.PI / 180
-    var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight
-    var zNear = 0.1
-    var zFar = 100
-    var projectionMatrix = m4.perspective(filedOfView, aspect, zNear, zFar)
-
-    // 矩阵相乘
-    var matrix = scaleMatrix
-    matrix = m4.multiply(r1, matrix)
-    matrix = m4.multiply(r2, matrix)
-    matrix = m4.multiply(r3, matrix)
-    matrix = m4.multiply(translationMatrix, matrix);
-    matrix = m4.multiply(projectionMatrix, matrix);
-    matrix = m4.transpose(matrix)
-  
-    // console.log(matrix)
-
-    // Set the matrix.
-    gl.uniformMatrix4fv(matrixUniformLocation, false, matrix);
-
 
     // 设置顶点属性及缓冲区
     gl.enableVertexAttribArray(positionAttributeLocation)
@@ -531,13 +481,38 @@
     var offset = 0
     gl.vertexAttribPointer(colorAttributeLocation, size, type, normalized, stride, offset)
 
+    // 计算所有变换矩阵
+    // var projectionMatrix = m4.projection(gl.canvas.width, gl.canvas.height, 400);
+    var filedOfView = 60 * Math.PI / 180
+    var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight
+    var zNear = 1
+    var zFar = 2000
+    var projectionMatrix = m4.perspective(filedOfView, aspect, zNear, zFar)
+    var translationMatrix = m4.translation(translation[0], translation[1], translation[2]);
+    var r1 = m4.rotationX(angleInRadians[0]);
+    var r2 = m4.rotationY(angleInRadians[1]);
+    var r3 = m4.rotationZ(angleInRadians[2]);
+    var scaleMatrix = m4.scaling(scale[0], scale[1], scale[2]);
+
+    // 矩阵相乘
+    // 计算 projection * translation * rotation * scaling * position
+    var matrix = projectionMatrix
+    matrix = m4.multiply(matrix, translationMatrix)
+    matrix = m4.multiply(matrix, r1)
+    matrix = m4.multiply(matrix, r2)
+    matrix = m4.multiply(matrix, r3);
+    matrix = m4.multiply(matrix, scaleMatrix);
+  
+    // console.log(matrix)
+
+    // Set the matrix.
+    gl.uniformMatrix4fv(matrixUniformLocation, false, matrix);
+
 
     // 绘制图形
     var primitiveType = gl.TRIANGLES
     var offset = 0
     var count = 16 * 6
-    gl.enable(gl.CULL_FACE)
-    gl.enable(gl.DEPTH_TEST)
     gl.drawArrays(primitiveType, offset, count)
 
   }
@@ -549,14 +524,14 @@
     var theta = 0
     var radius = 0
     var angleInRadians = [0, 0, 0]
-    var translation = [0, 0, -50]
+    var translation = [-150, 0, -360]
     setInterval(function() {
       drawScene(gl, scale, angleInRadians, translation)
       // scale[0] += 0.1
       // scale[1] += 0.1
       // translation[0] += 5
       // translation[1] += 3
-      translation[2] += 1 
+      // translation[2] += 1 
       theta += 1
       radius = theta / 180 * Math.PI
       angleInRadians = [radius, radius, radius]
